@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Manage Sections{% endblock %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-6">Manage Sections</h2>
+{% include 'admin_nav.html' %}
+
+<div class="bg-white rounded shadow p-6 mb-8">
+  <h3 class="text-lg font-semibold mb-4">Create Section</h3>
+  <form method="post" class="grid grid-cols-1 md:grid-cols-5 gap-3">
+    <div>
+      <label class="block text-sm font-medium mb-1">Course</label>
+      <select name="course_id" class="border rounded px-3 py-2 w-full" required>
+        <option value="">Select Course</option>
+        {% for c in courses %}
+        <option value="{{ c.id }}">{{ c.code }} — {{ c.title }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm font-medium mb-1">Section Code</label>
+      <input type="text" name="section_code" placeholder="e.g., A1" class="border rounded px-3 py-2 w-full" required />
+    </div>
+    <div>
+      <label class="block text-sm font-medium mb-1">Instructor (Lecturer)</label>
+      <select name="instructor_id" class="border rounded px-3 py-2 w-full" required>
+        <option value="">Select Lecturer</option>
+        {% for u in lecturers %}
+        <option value="{{ u.id }}">{{ u.username }} ({{ u.email }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm font-medium mb-1">Teaching Assistant (optional)</label>
+      <select name="ta_id" class="border rounded px-3 py-2 w-full">
+        <option value="">None</option>
+        {% for u in tas %}
+        <option value="{{ u.id }}">{{ u.username }} ({{ u.email }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="flex items-end">
+      <button type="submit" class="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-900 w-full">Create</button>
+    </div>
+  </form>
+</div>
+
+<div class="bg-white rounded shadow overflow-hidden">
+  <table class="min-w-full">
+    <thead class="bg-gray-50">
+      <tr>
+        <th class="text-left py-2 px-4 border-b">Course</th>
+        <th class="text-left py-2 px-4 border-b">Section Code</th>
+        <th class="text-left py-2 px-4 border-b">Instructor</th>
+        <th class="text-left py-2 px-4 border-b">TA</th>
+        <th class="text-left py-2 px-4 border-b">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in sections %}
+      <tr class="odd:bg-white even:bg-gray-50">
+        <td class="py-2 px-4 border-b">{{ s.course.code }} — {{ s.course.title }}</td>
+        <td class="py-2 px-4 border-b">{{ s.section_code }}</td>
+        <td class="py-2 px-4 border-b">{{ s.instructor.username }}</td>
+        <td class="py-2 px-4 border-b">{{ s.ta.username if s.ta else '-' }}</td>
+        <td class="py-2 px-4 border-b">
+          <div class="flex flex-wrap gap-2">
+            <a href="{{ url_for('attendance.admin_section_attendance', section_id=s.id) }}"
+               class="bg-emerald-600 text-white px-3 py-1 rounded hover:bg-emerald-800">Attendance</a>
+            <form method="post" action="{{ url_for('admin.delete_section', section_id=s.id) }}" onsubmit="return confirm('Delete this section? This will remove related sessions and enrollments.');">
+              <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-800">Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="5" class="py-4 px-4 text-center text-gray-600">No sections created.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

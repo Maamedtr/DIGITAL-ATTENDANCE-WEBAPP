@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% block title %}Sessions · {{ section.course.code }} {{ section.section_code }}{% endblock %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-2">Sessions for {{ section.course.code }} — {{ section.course.title }}</h2>
+<p class="text-gray-700 mb-6">Section: <span class="font-semibold">{{ section.section_code }}</span></p>
+
+<div class="bg-white rounded shadow p-6 mb-8">
+  <h3 class="text-lg font-semibold mb-4">Create Class Session</h3>
+  <form method="post" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div>
+      <label class="block text-sm font-medium mb-1">Scheduled Start</label>
+      <input type="datetime-local" name="scheduled_start" class="border rounded px-3 py-2 w-full" required>
+    </div>
+    <div>
+      <label class="block text-sm font-medium mb-1">Scheduled End</label>
+      <input type="datetime-local" name="scheduled_end" class="border rounded px-3 py-2 w-full" required>
+    </div>
+    <div class="flex items-end">
+      <button type="submit" class="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-900 w-full">Create</button>
+    </div>
+  </form>
+</div>
+
+{% if opened_code and opened_session_id %}
+  {% set expired = opened_expires_at and now_utc and now_utc > opened_expires_at %}
+  {% if expired %}
+  <div class="bg-red-50 border border-red-200 rounded p-4 mb-8">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <div class="text-sm text-red-800">Session Code Expired</div>
+        <div class="text-gray-700 mt-1">
+          This session's marking window has expired.
+        </div>
+        {% if opened_expires_at %}
+        <div class="mt-1 text-sm text-red-900">
+          Expired at: {{ opened_expires_at.strftime('%Y-%m-%d %H:%M UTC') }}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="bg-green-50 border border-green-200 rounded p-4 mb-8">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <div class="text-sm text-green-800">Session Opened</div>
+        <div class="text-2xl font-bold text-green-900 tracking-widest">CODE: {{ opened_code }}</div>
+        <div class="text-gray-700 mt-1">
+          Students can scan the QR or visit the mark page and enter this code.
+        </div>
+        <div class="mt-2">
+          <a class="text-blue-700 underline"
+             href="{{ url_for('attendance.student_mark', session_id=opened_session_id) }}?code={{ opened_code }}"
+             target="_blank">Open Student Mark URL</a>
+        </div>
+        <div class="mt-2 text-sm text-green-900">
+          Attendees: {{ opened_attendee_count or 0 }}
+        </div>
+        {% if opened_expires_at %}
+        <div class="mt-1 text-sm text-green-900">
+          Expires at: {{ opened_expires_at.strftime('%Y-%m-%d %H:%M UTC') }}
+          <span class="ml-2" id="ttlCountdown" data-expires="{{ opened_expires_at.isoformat() }}">(calculating...)</span>
+        </div>
+        {% endif %}
+      </div>
+      {% if qr_svg %}
+      <div class="flex items-center justify-center">
+        <img alt="QR code for attendance" class="w-48 h-48" src="{{ qr_svg }}">
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  <script>
+    (function() {
+      var el = document.getElementById('ttlCountdown');
+      if (!el) return;
+      var expiresStr = el.getAttribute('data-expires');
+      if (!expiresStr) return;
+      var expiresAt = new Date(expiresStr);
+      function tick() {
+        var now = new Date();
+        var diffMs = expiresAt - now;
+        if (diffMs <= 0) {
+          el.textContent = '(expired)';
+          return;
+        }
+        var totalSeconds = Math.floor(diffMs / 1000);
+        var m = Math.floor(totalSeconds / 60);
+        var s = totalSeconds % 60;
+        el.textContent = '(' + m + 'm ' + (s < 10 ? '0' + s : s) + 's remaining)';
+        requestAnimationFrame(function() {
+          setTimeout(tick, 250);
+        });
+      }
+      tick();
+    })();
+  </script>
+  {% endif %}
+{% endif %}
+
+<div class="bg-white rounded shadow overflow-hidden">
+  <table class="min-w-full">
+    <thead class="bg-gray-50">
+      <tr>
+        <th class="text-left py-2 px-4 border-b">Start</th>
+        <th class="text-left py-2 px-4 border-b">End</th>
+        <th class="text-left py-2 px-4 border-b">Status</th>
+        <th class="text-left py-2 px-4 border-b">Attendees</th>
+        <th class="text-left py-2 px-4 border-b">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in sessions %}
+      <tr class="odd:bg-white even:bg-gray-50">
+        <td class="py-2 px-4 border-b">{{ s.scheduled_start.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td class="py-2 px-4 border-b">{{ s.scheduled_end.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td class="py-2 px-4 border-b">
+          <span class="px-2 py-1 rounded text-sm
+            {% if s.status == 'open' %}bg-green-100 text-green-800
+            {% elif s.status == 'closed' %}bg-gray-200 text-gray-800
+            {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+            {{ s.status|capitalize }}
+          </span>
+        </td>
+        <td class="py-2 px-4 border-b">{{ s.attendance_records|length }}</td>
+        <td class="py-2 px-4 border-b">
+          <div class="flex flex-wrap gap-2">
+            {% if s.status != 'open' and s.status != 'closed' %}
+            <form method="post" action="{{ url_for('attendance.open_session', session_id=s.id) }}">
+              <button class="bg-blue-700 text-white px-3 py-1 rounded hover:bg-blue-900">Open</button>
+            </form>
+            {% endif %}
+            {% if s.status == 'open' %}
+            <form method="post" action="{{ url_for('attendance.close_session', session_id=s.id) }}">
+              <button class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-800">Close</button>
+            </form>
+            {% if opened_code and opened_session_id == s.id %}
+              {% set expired = opened_expires_at and now_utc and now_utc > opened_expires_at %}
+              {% if not expired %}
+              <a class="bg-emerald-600 text-white px-3 py-1 rounded hover:bg-emerald-800"
+                 href="{{ url_for('attendance.lecturer_sessions', section_id=section.id, opened_session_id=s.id, code=opened_code) }}">
+                 Show Code/QR
+              </a>
+              {% else %}
+              <span class="px-2 py-1 rounded text-sm bg-red-100 text-red-800">Expired</span>
+              {% endif %}
+            {% else %}
+            <span class="text-gray-500 text-sm">Code available immediately after opening</span>
+            {% endif %}
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="4" class="py-4 px-4 text-center text-gray-600">No sessions yet.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="mt-6">
+  <a href="{{ url_for('lecturer.lecturer_sections') }}" class="text-blue-700 underline">Back to My Sections</a>
+</div>
+{% endblock %}

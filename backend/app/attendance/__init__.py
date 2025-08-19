@@ -1,0 +1,1 @@
+from .routes import attendance_bp  # re-export for convenient import

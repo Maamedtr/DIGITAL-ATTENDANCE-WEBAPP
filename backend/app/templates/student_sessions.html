@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Open Sessions{% endblock %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-6">Open Sessions</h2>
+
+<div class="bg-white rounded shadow overflow-hidden">
+  <table class="min-w-full">
+    <thead class="bg-gray-50">
+      <tr>
+        <th class="text-left py-2 px-4 border-b">Course</th>
+        <th class="text-left py-2 px-4 border-b">Section</th>
+        <th class="text-left py-2 px-4 border-b">Start</th>
+        <th class="text-left py-2 px-4 border-b">End</th>
+        <th class="text-left py-2 px-4 border-b">Status</th>
+        <th class="text-left py-2 px-4 border-b">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in open_sessions %}
+      <tr class="odd:bg-white even:bg-gray-50">
+        <td class="py-2 px-4 border-b">{{ s.section.course.code }} — {{ s.section.course.title }}</td>
+        <td class="py-2 px-4 border-b">{{ s.section.section_code }}</td>
+        <td class="py-2 px-4 border-b">{{ s.scheduled_start.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td class="py-2 px-4 border-b">{{ s.scheduled_end.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td class="py-2 px-4 border-b">
+          {% if s.id in attended_session_ids %}
+            <span class="px-2 py-1 rounded text-sm bg-green-100 text-green-800">Marked</span>
+          {% else %}
+            <span class="px-2 py-1 rounded text-sm bg-yellow-100 text-yellow-800">Open</span>
+          {% endif %}
+        </td>
+        <td class="py-2 px-4 border-b">
+          {% if s.id in attended_session_ids %}
+            <span class="text-gray-500 text-sm">Already recorded</span>
+          {% else %}
+            <a href="{{ url_for('attendance.student_mark', session_id=s.id) }}"
+               class="bg-blue-700 text-white px-3 py-1 rounded hover:bg-blue-900">Mark Attendance</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="6" class="py-4 px-4 text-center text-gray-600">No open sessions for your enrollments.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="mt-6">
+  <a href="{{ url_for('student.student_dashboard') }}" class="text-blue-700 underline">Back to Dashboard</a>
+</div>
+{% endblock %}

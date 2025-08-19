@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Bulk Enrollment Upload{% endblock %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-6">Bulk Enrollment (CSV)</h2>
+{% include 'admin_nav.html' %}
+
+<div class="bg-white rounded shadow p-6 mb-8">
+  <h3 class="text-lg font-semibold mb-4">Upload CSV</h3>
+  <form method="post" enctype="multipart/form-data" class="space-y-4">
+    <div>
+      <label class="block text-sm font-medium mb-1">Section (optional if provided in CSV)</label>
+      <select name="section_id" class="border rounded px-3 py-2 w-full">
+        <option value="">-- Select Section (optional) --</option>
+        {% for s in sections %}
+        <option value="{{ s.id }}">
+          {{ s.course.code }} — {{ s.course.title }} · {{ s.section_code }} (Lecturer: {{ s.instructor.username }})
+        </option>
+        {% endfor %}
+      </select>
+      <p class="text-xs text-gray-500 mt-1">
+        If you select a section here, you may omit the section_id column in the CSV.
+      </p>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium mb-1">CSV File</label>
+      <input type="file" name="csv_file" accept=".csv,text/csv" class="border rounded px-3 py-2 w-full" required />
+      <p class="text-xs text-gray-500 mt-1">
+        Expected columns (header row optional): email, username (optional), section_id (optional).
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <input id="create_missing" type="checkbox" name="create_missing" class="h-4 w-4" />
+      <label for="create_missing" class="text-sm">
+        Create pending student accounts for emails not found
+      </label>
+    </div>
+
+    <div class="flex gap-2">
+      <button type="submit" class="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-800">Process Upload</button>
+      <a href="{{ url_for('admin.manage_enrollments') }}" class="px-4 py-2 rounded border text-blue-700 border-blue-700 hover:bg-blue-50">Back to Enrollments</a>
+    </div>
+  </form>
+</div>
+
+{% if result is not none %}
+<div class="bg-white rounded shadow p-6">
+  <h3 class="text-lg font-semibold mb-4">Upload Summary</h3>
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+    <div class="p-3 rounded bg-green-50 text-green-800">
+      <div class="text-sm">Enrolled</div>
+      <div class="text-2xl font-bold">{{ result.enrolled }}</div>
+    </div>
+    <div class="p-3 rounded bg-yellow-50 text-yellow-800">
+      <div class="text-sm">Duplicates</div>
+      <div class="text-2xl font-bold">{{ result.duplicates }}</div>
+    </div>
+    <div class="p-3 rounded bg-blue-50 text-blue-800">
+      <div class="text-sm">Created Pending</div>
+      <div class="text-2xl font-bold">{{ result.created_pending }}</div>
+    </div>
+    <div class="p-3 rounded bg-red-50 text-red-800">
+      <div class="text-sm">Errors</div>
+      <div class="text-2xl font-bold">{{ result.errors|length }}</div>
+    </div>
+  </div>
+
+  {% if result.errors %}
+  <div class="mt-4">
+    <h4 class="font-semibold mb-2">Errors</h4>
+    <ul class="list-disc ml-6 space-y-1 text-sm text-red-800">
+      {% for err in result.errors %}
+      <li>{{ err }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

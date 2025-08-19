@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Manage Enrollments{% endblock %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-6">Manage Enrollments</h2>
+{% include 'admin_nav.html' %}
+
+<div class="bg-white rounded shadow p-6 mb-8">
+  <h3 class="text-lg font-semibold mb-4">Add Enrollment</h3>
+  <form method="post" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <div>
+      <label class="block text-sm font-medium mb-1">Section</label>
+      <select name="section_id" class="border rounded px-3 py-2 w-full" required>
+        <option value="">Select Section</option>
+        {% for s in sections %}
+        <option value="{{ s.id }}">
+          {{ s.course.code }} — {{ s.course.title }} · {{ s.section_code }} (Lecturer: {{ s.instructor.username }})
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm font-medium mb-1">Student</label>
+      <select name="student_id" class="border rounded px-3 py-2 w-full" required>
+        <option value="">Select Student</option>
+        {% for stu in students %}
+        <option value="{{ stu.id }}">{{ stu.username }} ({{ stu.email }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="flex items-end">
+      <button type="submit" class="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-900 w-full">Enroll</button>
+    </div>
+  </form>
+</div>
+
+<div class="bg-white rounded shadow p-6 mb-8">
+  <h3 class="text-lg font-semibold mb-2">Bulk Enrollment (CSV)</h3>
+  <p class="text-gray-700 mb-3 text-sm">
+    Upload a CSV to enroll multiple students at once. Format: <code>email,username(optional),section_id(optional)</code>.
+    You can select the section on the upload page instead of including section_id in the file.
+  </p>
+  <a href="{{ url_for('admin.upload_enrollments') }}"
+     class="inline-block bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-800">
+    Go to Bulk Upload
+  </a>
+</div>
+
+<div class="bg-white rounded shadow overflow-hidden">
+  <table class="min-w-full">
+    <thead class="bg-gray-50">
+      <tr>
+        <th class="text-left py-2 px-4 border-b">Course</th>
+        <th class="text-left py-2 px-4 border-b">Section</th>
+        <th class="text-left py-2 px-4 border-b">Student</th>
+        <th class="text-left py-2 px-4 border-b">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for enr in enrollments %}
+      <tr class="odd:bg-white even:bg-gray-50">
+        <td class="py-2 px-4 border-b">{{ enr.section.course.code }} — {{ enr.section.course.title }}</td>
+        <td class="py-2 px-4 border-b">{{ enr.section.section_code }}</td>
+        <td class="py-2 px-4 border-b">{{ enr.student.username }} ({{ enr.student.email }})</td>
+        <td class="py-2 px-4 border-b">
+          <form method="post" action="{{ url_for('admin.delete_enrollment', enrollment_id=enr.id) }}" onsubmit="return confirm('Remove this enrollment?');">
+            <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-800">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="4" class="py-4 px-4 text-center text-gray-600">No enrollments found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

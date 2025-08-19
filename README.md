@@ -1,10 +1,11 @@
 # DIGITAL-ATTENDANCE-WEBAPP
+
 Admin / School Management
 Purpose: Full control over the system, database, and analytics
 Dashboard Features
 • Analytics & Reports
 • Overall attendance percentage per day, week, month
- Absentee trends & frequent absentees list
+Absentee trends & frequent absentees list
 
 Student & Teacher Management
 • Add/edit/remove student and teacher accounts.
@@ -13,33 +14,33 @@ Attendance Monitoring
 • Live class attendance overview.
 • Ability to edit or approve attendance corrections.
 • Notifications
-• Send alerts to parents for absences.
-• School-wide announcements.
+• Platform-wide announcements.
 • Database Control
-• Backup & restore options.
 • Audit logs of attendance edits.
-2. Teacher
-Purpose: Mark attendance, monitor student participation, and view analytics for their classes.
-Dashboard Features
-• Class Overview
+
+2. Teacher/ Assistant
+   Purpose: Mark attendance, monitor student participation, and view analytics for their classes.
+   Dashboard Features
+   • Class Overview
 
 Daily and monthly attendance percentage.
 Attendance Marking
 • Manual marking (present/absent/late).
-• QR code or RFID-based auto marking (if integrated).
+• QR code based auto marking from student side.
 Notifications
-• Option to send absence reminders to students or parents
+• Option to send absence reminders to students
+
 3. Student
-Purpose: Track personal attendance and get notified about absences.
-Dashboard Features
-• Attendance Overview
-• Personal attendance percentage per subject.
-• Calendar view with marked absences and presences.
+   Purpose: Add and Track personal attendance and get notified about absences.
+   Dashboard Features
+   • Attendance Overview
+   • Get timetables
+   • Calendar view with marked absences and presences based on timetable
 
 Notifications
-• Alerts for low attendance.
-• Class or school announcements
- 
+• Get Alerts for low attendance.
+• get Class or school announcements
+
 Profile & History
 • Edit personal details.
 • View detailed attendance logs.

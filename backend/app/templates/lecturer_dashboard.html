@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Lecturer Dashboard{% endblock %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-6">Lecturer Dashboard</h2>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div class="bg-white rounded shadow p-6">
+    <h3 class="text-lg font-semibold mb-3">Manage</h3>
+    <ul class="list-disc ml-6 space-y-2">
+      <li><a class="text-blue-700 underline" href="{{ url_for('lecturer.lecturer_sections') }}">My Sections</a></li>
+    </ul>
+  </div>
+
+  <div class="bg-white rounded shadow p-6">
+    <h3 class="text-lg font-semibold mb-3">Tips</h3>
+    <ul class="list-disc ml-6 space-y-2">
+      <li>Create a class session with start/end times.</li>
+      <li>Open the session to generate a 6-digit code and QR.</li>
+      <li>Students scan or enter the code to mark attendance.</li>
+    </ul>
+  </div>
+</div>
+{% endblock %}

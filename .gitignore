@@ -1,0 +1,78 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+.cache/
+nosetests.xml
+coverage.xml
+htmlcov/
+.tox/
+junit.xml
+
+# Logs
+logs/
+*.log
+
+# SQLite databases and local state
+*.db
+*.sqlite3
+backend/attendance.db
+backend/instance/
+instance/
+
+# Flask instance (keep ignore files if present)
+!backend/instance/.gitignore
+!backend/instance/.gitkeep
+!instance/.gitignore
+!instance/.gitkeep
+
+# Editor/IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backup/temp
+*.bak
+*.orig
+*.tmp

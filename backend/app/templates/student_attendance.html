@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}My Attendance{% endblock %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-6">My Attendance</h2>
+
+<div class="bg-white rounded shadow p-4 mb-6">
+  <div class="flex flex-wrap items-center gap-3">
+    <a href="{{ url_for('student.student_attendance_csv') }}"
+       class="bg-blue-700 text-white px-3 py-1 rounded hover:bg-blue-900">
+      Export My Attendance (CSV)
+    </a>
+    <a href="{{ url_for('student.student_dashboard') }}"
+       class="px-3 py-1 rounded border text-blue-700 border-blue-700 hover:bg-blue-50">
+      Back to Dashboard
+    </a>
+  </div>
+</div>
+
+<h3 class="text-lg font-semibold mb-3">Per-Section Summary</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+  {% for row in per_section %}
+  {% set sec = row.section %}
+  <div class="bg-white rounded shadow p-4">
+    <div class="text-sm text-gray-600">{{ sec.course.code }} — {{ sec.course.title }}</div>
+    <div class="text-gray-700"><span class="font-semibold">Section:</span> {{ sec.section_code }}</div>
+    <div class="mt-2 text-sm text-gray-700">
+      <span class="font-semibold">Sessions:</span> {{ row.present }}/{{ row.total }}
+      <span class="ml-2">({{ '%.1f' % row.pct }}%)</span>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-span-1 md:col-span-2 lg:col-span-3 text-gray-600">
+    You are not enrolled in any sections.
+  </div>
+  {% endfor %}
+</div>
+
+<h3 class="text-lg font-semibold mb-3">Recent Sessions</h3>
+<div class="bg-white rounded shadow overflow-hidden">
+  <table class="min-w-full">
+    <thead class="bg-gray-50">
+      <tr>
+        <th class="text-left py-2 px-4 border-b">Course</th>
+        <th class="text-left py-2 px-4 border-b">Section</th>
+        <th class="text-left py-2 px-4 border-b">Start</th>
+        <th class="text-left py-2 px-4 border-b">End</th>
+        <th class="text-left py-2 px-4 border-b">Status</th>
+        <th class="text-left py-2 px-4 border-b">Recorded At</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in recent_sessions %}
+      {% set s = row.session %}
+      {% set course = row.course %}
+      {% set sec = row.section %}
+      <tr class="odd:bg-white even:bg-gray-50">
+        <td class="py-2 px-4 border-b">{{ course.code }} — {{ course.title }}</td>
+        <td class="py-2 px-4 border-b">{{ sec.section_code }}</td>
+        <td class="py-2 px-4 border-b">{{ s.scheduled_start.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td class="py-2 px-4 border-b">{{ s.scheduled_end.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td class="py-2 px-4 border-b">
+          <span class="px-2 py-1 rounded text-sm
+            {% if row.status == 'present' %}bg-green-100 text-green-800
+            {% else %}bg-gray-200 text-gray-800{% endif %}">
+            {{ row.status|capitalize }}
+          </span>
+        </td>
+        <td class="py-2 px-4 border-b">
+          {% if row.recorded_at %}
+            {{ row.recorded_at.strftime('%Y-%m-%d %H:%M:%S') }}
+          {% else %}
+            <span class="text-gray-500">—</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="6" class="py-4 px-4 text-center text-gray-600">No sessions found for your enrollments.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

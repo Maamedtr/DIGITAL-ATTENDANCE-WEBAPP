@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}My Sections{% endblock %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-6">My Sections</h2>
+
+<div class="bg-white rounded shadow overflow-hidden">
+  <table class="min-w-full">
+    <thead class="bg-gray-50">
+      <tr>
+        <th class="text-left py-2 px-4 border-b">Course</th>
+        <th class="text-left py-2 px-4 border-b">Section Code</th>
+        <th class="text-left py-2 px-4 border-b">TA</th>
+        <th class="text-left py-2 px-4 border-b">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in sections %}
+      <tr class="odd:bg-white even:bg-gray-50">
+        <td class="py-2 px-4 border-b">{{ s.course.code }} &middot; {{ s.course.title }}</td>
+        <td class="py-2 px-4 border-b">{{ s.section_code }}</td>
+        <td class="py-2 px-4 border-b">{{ s.ta.username if s.ta else '-' }}</td>
+        <td class="py-2 px-4 border-b">
+          <a href="{{ url_for('attendance.lecturer_sessions', section_id=s.id) }}"
+             class="bg-blue-700 text-white px-3 py-1 rounded hover:bg-blue-900">Manage Sessions</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="4" class="py-4 px-4 text-center text-gray-600">No sections assigned.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

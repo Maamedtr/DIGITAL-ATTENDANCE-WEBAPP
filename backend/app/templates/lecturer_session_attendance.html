@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Session Attendance · {{ section.course.code }} {{ section.section_code }}{% endblock %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-2">Attendance for {{ section.course.code }} — {{ section.course.title }}</h2>
+<p class="text-gray-700 mb-6">Section: <span class="font-semibold">{{ section.section_code }}</span> · Session: {{ session.scheduled_start.strftime('%Y-%m-%d %H:%M') }} → {{ session.scheduled_end.strftime('%Y-%m-%d %H:%M') }}</p>
+
+<div class="bg-white rounded shadow p-4 mb-4">
+  <div class="flex flex-wrap items-center gap-4">
+    <div><span class="font-semibold">Present:</span> {{ present }}/{{ total }} ({{ '%.1f' % pct }}%)</div>
+    <a class="bg-blue-700 text-white px-3 py-1 rounded hover:bg-blue-900"
+       href="{{ url_for('attendance.lecturer_session_attendance_csv', session_id=session.id) }}">
+       Export CSV
+    </a>
+    <a class="px-3 py-1 rounded border text-blue-700 border-blue-700 hover:bg-blue-50"
+       href="{{ url_for('attendance.lecturer_sessions', section_id=section.id) }}">Back to Sessions</a>
+  </div>
+</div>
+
+<div class="bg-white rounded shadow overflow-hidden">
+  <table class="min-w-full">
+    <thead class="bg-gray-50">
+      <tr>
+        <th class="text-left py-2 px-4 border-b">Student ID</th>
+        <th class="text-left py-2 px-4 border-b">Username</th>
+        <th class="text-left py-2 px-4 border-b">Email</th>
+        <th class="text-left py-2 px-4 border-b">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in students %}
+      <tr class="odd:bg-white even:bg-gray-50">
+        <td class="py-2 px-4 border-b">{{ s.id }}</td>
+        <td class="py-2 px-4 border-b">{{ s.username }}</td>
+        <td class="py-2 px-4 border-b">{{ s.email }}</td>
+        <td class="py-2 px-4 border-b">
+          <span class="px-2 py-1 rounded text-sm {% if s.status == 'present' %}bg-green-100 text-green-800{% else %}bg-gray-200 text-gray-800{% endif %}">
+            {{ s.status|capitalize }}
+          </span>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="4" class="py-4 px-4 text-center text-gray-600">No enrollments found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
