@@ -2,6 +2,8 @@ from flask import Blueprint, render_template, redirect, url_for, flash, make_res
 from flask_login import login_required, current_user
 from sqlalchemy import and_
 from app.models import Enrollment, ClassSession, Section, AttendanceRecord
+from app.models import Alert, AlertRecipient  # alerts
+from app.extensions import db
 import io, csv
 
 student_bp = Blueprint('student', __name__)
@@ -168,3 +170,36 @@ def student_attendance_csv():
     resp.headers['Content-Type'] = 'text/csv; charset=utf-8'
     resp.headers['Content-Disposition'] = 'attachment; filename="my_attendance.csv"'
     return resp
+
+
+# --- Alerts: Student inbox (read-only) ---
+@student_bp.route('/alerts', methods=['GET'], endpoint='student_alerts_inbox')
+@login_required
+def student_alerts_inbox():
+    guard = _ensure_student()
+    if guard:
+        return guard
+
+    # Fetch alerts addressed to this student
+    recs = (AlertRecipient.query
+            .filter_by(recipient_id=current_user.id)
+            .order_by(AlertRecipient.id.desc())
+            .all())
+    # Eager load alerts
+    alert_ids = [r.alert_id for r in recs]
+    alerts = []
+    if alert_ids:
+        alert_map = {a.id: a for a in Alert.query.filter(Alert.id.in_(alert_ids)).order_by(Alert.created_at.desc()).all()}
+        for r in recs:
+            a = alert_map.get(r.alert_id)
+            if a:
+                alerts.append({'rec': r, 'alert': a})
+
+    # Mark unread as read
+    unread = [r for r in recs if not r.is_read]
+    if unread:
+        for r in unread:
+            r.is_read = True
+        db.session.commit()
+
+    return render_template('alerts_inbox.html', alerts=alerts, role='student')

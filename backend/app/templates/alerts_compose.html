@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+{% block title %}Send Alerts{% endblock %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-6">Send Alert</h2>
+
+<div class="bg-white rounded shadow p-6 mb-6">
+  <form method="post" class="grid grid-cols-1 gap-6" id="alertForm">
+    {{ csrf_field }}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium mb-1">Title</label>
+        <input type="text" name="title" class="border rounded px-3 py-2 w-full" required />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">Message</label>
+        <textarea name="body" class="border rounded px-3 py-2 w-full min-h-[120px]" required></textarea>
+        <p class="text-xs text-gray-600 mt-1">One-way in-app alert. No replies.</p>
+      </div>
+    </div>
+
+    {% if mode == 'admin' %}
+    <!-- Admin Targeting -->
+    <div class="bg-gray-50 border rounded p-4">
+      <div class="font-semibold mb-3">Admin Targeting</div>
+
+      <div class="flex flex-wrap items-center gap-6 mb-4">
+        <label class="inline-flex items-center gap-2">
+          <input type="checkbox" name="all_students" id="all_students" />
+          <span>All Students</span>
+        </label>
+        <label class="inline-flex items-center gap-2">
+          <input type="checkbox" name="all_lecturers" id="all_lecturers" />
+          <span>All Lecturers</span>
+        </label>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Students selector -->
+        <div id="studentsBlock" class="transition-opacity">
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <label class="block text-sm font-medium">Specific Students (multi-select)</label>
+            <input id="studentSearch" type="text" placeholder="Search students by name or email..." class="border rounded px-2 py-1 w-56" />
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="border rounded p-2">
+              <div class="text-sm text-gray-600 mb-2">Available</div>
+              <ul id="studentList" class="max-h-56 overflow-auto text-sm space-y-1"></ul>
+            </div>
+            <div class="border rounded p-2">
+              <div class="flex items-center justify-between mb-2">
+                <div class="text-sm text-gray-600">Selected</div>
+                <button type="button" id="studentClear" class="text-xs text-blue-700 hover:underline">Clear</button>
+              </div>
+              <div id="studentSelected" class="flex flex-wrap gap-2"></div>
+            </div>
+          </div>
+
+          <!-- Hidden multi-select that actually submits -->
+          <select id="studentSelectHidden" name="student_ids" multiple class="hidden"></select>
+          <p class="text-xs text-gray-600 mt-1">Click available names to add/remove. Selected appear as chips; remove to unselect.</p>
+        </div>
+
+        <!-- Lecturers selector -->
+        <div id="lecturersBlock" class="transition-opacity">
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <label class="block text-sm font-medium">Specific Lecturers (multi-select)</label>
+            <input id="lecturerSearch" type="text" placeholder="Search lecturers by name or email..." class="border rounded px-2 py-1 w-56" />
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="border rounded p-2">
+              <div class="text-sm text-gray-600 mb-2">Available</div>
+              <ul id="lecturerList" class="max-h-56 overflow-auto text-sm space-y-1"></ul>
+            </div>
+            <div class="border rounded p-2">
+              <div class="flex items-center justify-between mb-2">
+                <div class="text-sm text-gray-600">Selected</div>
+                <button type="button" id="lecturerClear" class="text-xs text-blue-700 hover:underline">Clear</button>
+              </div>
+              <div id="lecturerSelected" class="flex flex-wrap gap-2"></div>
+            </div>
+          </div>
+
+          <!-- Hidden multi-select that actually submits -->
+          <select id="lecturerSelectHidden" name="lecturer_ids" multiple class="hidden"></select>
+          <p class="text-xs text-gray-600 mt-1">Click available names to add/remove. Selected appear as chips; remove to unselect.</p>
+        </div>
+      </div>
+    </div>
+    {% elif mode in ['lecturer', 'ta'] %}
+    <!-- Lecturer/TA Targeting -->
+    <div class="bg-gray-50 border rounded p-4">
+      <div class="font-semibold mb-3">Recipients (Students you manage)</div>
+
+      <div class="flex items-center justify-between gap-2 mb-2">
+        <label class="block text-sm font-medium">Students (multi-select)</label>
+        <input id="studentSearch" type="text" placeholder="Search students by name or email..." class="border rounded px-2 py-1 w-56" />
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="border rounded p-2">
+          <div class="text-sm text-gray-600 mb-2">Available</div>
+          <ul id="studentList" class="max-h-64 overflow-auto text-sm space-y-1"></ul>
+        </div>
+        <div class="border rounded p-2">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-sm text-gray-600">Selected</div>
+            <button type="button" id="studentClear" class="text-xs text-blue-700 hover:underline">Clear</button>
+          </div>
+          <div id="studentSelected" class="flex flex-wrap gap-2"></div>
+        </div>
+      </div>
+
+      <select id="studentSelectHidden" name="student_ids" multiple class="hidden"></select>
+      <p class="text-xs text-gray-600 mt-1">Click available names to add/remove. Selected appear as chips; remove to unselect.</p>
+    </div>
+    {% endif %}
+
+    <div class="flex gap-2">
+      <button type="submit" class="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-900">Send Alert</button>
+      <a href="{{ url_for('index') }}" class="px-4 py-2 rounded border text-blue-700 border-blue-700 hover:bg-blue-50">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+(function() {
+  // Helpers
+  function createChip(id, label, onRemove) {
+    var chip = document.createElement('span');
+    chip.className = 'inline-flex items-center gap-1 px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs';
+    chip.dataset.id = String(id);
+    chip.textContent = label;
+    var x = document.createElement('button');
+    x.type = 'button';
+    x.textContent = '×';
+    x.className = 'ml-1 text-blue-700 hover:text-blue-900';
+    x.addEventListener('click', function() { onRemove(id); });
+    chip.appendChild(x);
+    return chip;
+  }
+  function addHiddenOption(hiddenSelect, id, label) {
+    // prevent duplicates
+    for (var i=0;i<hiddenSelect.options.length;i++) {
+      if (hiddenSelect.options[i].value === String(id)) return;
+    }
+    var opt = document.createElement('option');
+    opt.value = String(id);
+    opt.text = label;
+    opt.selected = true;
+    hiddenSelect.add(opt);
+  }
+  function removeHiddenOption(hiddenSelect, id) {
+    for (var i=0;i<hiddenSelect.options.length;i++) {
+      if (hiddenSelect.options[i].value === String(id)) {
+        hiddenSelect.remove(i);
+        return;
+      }
+    }
+  }
+  function renderList(container, items, selectedSet, onToggle) {
+    container.innerHTML = '';
+    items.forEach(function(item) {
+      var li = document.createElement('li');
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'w-full text-left px-2 py-1 rounded hover:bg-blue-50';
+      btn.textContent = item.label;
+      btn.dataset.id = String(item.id);
+      btn.addEventListener('click', function() { onToggle(item.id, item.label); });
+      if (selectedSet.has(item.id)) {
+        btn.className += ' bg-green-50';
+      }
+      li.appendChild(btn);
+      container.appendChild(li);
+    });
+  }
+  function renderSelected(container, selectedArr, onRemove) {
+    container.innerHTML = '';
+    selectedArr.forEach(function(s) {
+      container.appendChild(createChip(s.id, s.label, onRemove));
+    });
+  }
+
+  // Admin: students + lecturers
+  {% if mode == 'admin' %}
+    // Students
+    var allStudents = [
+      {% for s in students %}{ id: {{ s.id }}, label: "{{ (s.username ~ ' (' ~ s.email ~ ')')|e }}" }{% if not loop.last %},{% endif %}{% endfor %}
+    ];
+    var studentSearch = document.getElementById('studentSearch');
+    var studentList = document.getElementById('studentList');
+    var studentSelectedArea = document.getElementById('studentSelected');
+    var studentHidden = document.getElementById('studentSelectHidden');
+    var studentClear = document.getElementById('studentClear');
+    var studentSelectedSet = new Set();
+    var studentSelectedArr = [];
+
+    function filterStudents() {
+      var q = (studentSearch.value || '').toLowerCase();
+      var filtered = allStudents.filter(function(s){ return s.label.toLowerCase().indexOf(q) !== -1; });
+      renderList(studentList, filtered, studentSelectedSet, toggleStudent);
+    }
+    function toggleStudent(id, label) {
+      if (studentSelectedSet.has(id)) {
+        studentSelectedSet.delete(id);
+        studentSelectedArr = studentSelectedArr.filter(function(x){ return x.id !== id; });
+        removeHiddenOption(studentHidden, id);
+      } else {
+        studentSelectedSet.add(id);
+        studentSelectedArr.push({ id: id, label: label });
+        addHiddenOption(studentHidden, id, label);
+      }
+      renderSelected(studentSelectedArea, studentSelectedArr, removeStudent);
+      filterStudents();
+    }
+    function removeStudent(id) {
+      studentSelectedSet.delete(id);
+      studentSelectedArr = studentSelectedArr.filter(function(x){ return x.id !== id; });
+      removeHiddenOption(studentHidden, id);
+      renderSelected(studentSelectedArea, studentSelectedArr, removeStudent);
+      filterStudents();
+    }
+    if (studentClear) {
+      studentClear.addEventListener('click', function(){
+        studentSelectedSet.clear();
+        studentSelectedArr = [];
+        studentHidden.innerHTML = '';
+        renderSelected(studentSelectedArea, studentSelectedArr, removeStudent);
+        filterStudents();
+      });
+    }
+    if (studentSearch) studentSearch.addEventListener('input', filterStudents);
+    filterStudents();
+
+    // Lecturers
+    var allLecturers = [
+      {% for l in lecturers %}{ id: {{ l.id }}, label: "{{ (l.username ~ ' (' ~ l.email ~ ')')|e }}" }{% if not loop.last %},{% endif %}{% endfor %}
+    ];
+    var lecturerSearch = document.getElementById('lecturerSearch');
+    var lecturerList = document.getElementById('lecturerList');
+    var lecturerSelectedArea = document.getElementById('lecturerSelected');
+    var lecturerHidden = document.getElementById('lecturerSelectHidden');
+    var lecturerClear = document.getElementById('lecturerClear');
+    var lecturerSelectedSet = new Set();
+    var lecturerSelectedArr = [];
+
+    function filterLecturers() {
+      var q = (lecturerSearch.value || '').toLowerCase();
+      var filtered = allLecturers.filter(function(s){ return s.label.toLowerCase().indexOf(q) !== -1; });
+      renderList(lecturerList, filtered, lecturerSelectedSet, toggleLecturer);
+    }
+    function toggleLecturer(id, label) {
+      if (lecturerSelectedSet.has(id)) {
+        lecturerSelectedSet.delete(id);
+        lecturerSelectedArr = lecturerSelectedArr.filter(function(x){ return x.id !== id; });
+        removeHiddenOption(lecturerHidden, id);
+      } else {
+        lecturerSelectedSet.add(id);
+        lecturerSelectedArr.push({ id: id, label: label });
+        addHiddenOption(lecturerHidden, id, label);
+      }
+      renderSelected(lecturerSelectedArea, lecturerSelectedArr, removeLecturer);
+      filterLecturers();
+    }
+    function removeLecturer(id) {
+      lecturerSelectedSet.delete(id);
+      lecturerSelectedArr = lecturerSelectedArr.filter(function(x){ return x.id !== id; });
+      removeHiddenOption(lecturerHidden, id);
+      renderSelected(lecturerSelectedArea, lecturerSelectedArr, removeLecturer);
+      filterLecturers();
+    }
+    if (lecturerClear) {
+      lecturerClear.addEventListener('click', function(){
+        lecturerSelectedSet.clear();
+        lecturerSelectedArr = [];
+        lecturerHidden.innerHTML = '';
+        renderSelected(lecturerSelectedArea, lecturerSelectedArr, removeLecturer);
+        filterLecturers();
+      });
+    }
+    if (lecturerSearch) lecturerSearch.addEventListener('input', filterLecturers);
+    filterLecturers();
+
+    // Toggle blocks when broadcast is checked
+    var allStudentsChk = document.getElementById('all_students');
+    var allLecturersChk = document.getElementById('all_lecturers');
+    function toggleBlocks() {
+      var studentsBlock = document.getElementById('studentsBlock');
+      var lecturersBlock = document.getElementById('lecturersBlock');
+      var stuDisabled = allStudentsChk && allStudentsChk.checked;
+      var lecDisabled = allLecturersChk && allLecturersChk.checked;
+      [studentsBlock, lecturersBlock].forEach(function(block, idx){
+        if (!block) return;
+        var disabled = (idx === 0) ? stuDisabled : lecDisabled;
+        block.style.opacity = disabled ? '0.5' : '1';
+        block.querySelectorAll('input,button,select').forEach(function(el){
+          el.disabled = disabled;
+        });
+      });
+    }
+    if (allStudentsChk) allStudentsChk.addEventListener('change', toggleBlocks);
+    if (allLecturersChk) allLecturersChk.addEventListener('change', toggleBlocks);
+    toggleBlocks();
+  {% endif %}
+
+  // Lecturer/TA mode: students only
+  {% if mode in ['lecturer','ta'] %}
+    var allStudents = [
+      {% for s in students %}{ id: {{ s.id }}, label: "{{ (s.username ~ ' (' ~ s.email ~ ')')|e }}" }{% if not loop.last %},{% endif %}{% endfor %}
+    ];
+    var studentSearch = document.getElementById('studentSearch');
+    var studentList = document.getElementById('studentList');
+    var studentSelectedArea = document.getElementById('studentSelected');
+    var studentHidden = document.getElementById('studentSelectHidden');
+    var studentClear = document.getElementById('studentClear');
+    var studentSelectedSet = new Set();
+    var studentSelectedArr = [];
+
+    function filterStudentsLT() {
+      var q = (studentSearch.value || '').toLowerCase();
+      var filtered = allStudents.filter(function(s){ return s.label.toLowerCase().indexOf(q) !== -1; });
+      renderList(studentList, filtered, studentSelectedSet, toggleStudentLT);
+    }
+    function toggleStudentLT(id, label) {
+      if (studentSelectedSet.has(id)) {
+        studentSelectedSet.delete(id);
+        studentSelectedArr = studentSelectedArr.filter(function(x){ return x.id !== id; });
+        removeHiddenOption(studentHidden, id);
+      } else {
+        studentSelectedSet.add(id);
+        studentSelectedArr.push({ id: id, label: label });
+        addHiddenOption(studentHidden, id, label);
+      }
+      renderSelected(studentSelectedArea, studentSelectedArr, removeStudentLT);
+      filterStudentsLT();
+    }
+    function removeStudentLT(id) {
+      studentSelectedSet.delete(id);
+      studentSelectedArr = studentSelectedArr.filter(function(x){ return x.id !== id; });
+      removeHiddenOption(studentHidden, id);
+      renderSelected(studentSelectedArea, studentSelectedArr, removeStudentLT);
+      filterStudentsLT();
+    }
+    if (studentClear) {
+      studentClear.addEventListener('click', function(){
+        studentSelectedSet.clear();
+        studentSelectedArr = [];
+        studentHidden.innerHTML = '';
+        renderSelected(studentSelectedArea, studentSelectedArr, removeStudentLT);
+        filterStudentsLT();
+      });
+    }
+    if (studentSearch) studentSearch.addEventListener('input', filterStudentsLT);
+    filterStudentsLT();
+  {% endif %}
+})();
+</script>
+{% endblock %}

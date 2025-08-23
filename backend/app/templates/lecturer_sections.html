@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
-{% block title %}{{ 'My Assisted Sections' if ta_view else 'My Sections' }}{% endblock %}
+{% block title %}My Sections{% endblock %}
 {% block content %}
-<h2 class="text-2xl font-bold mb-6">{{ 'My Assisted Sections' if ta_view else 'My Sections' }}</h2>
+<h2 class="text-2xl font-bold mb-6">My Sections</h2>
 
 <div class="bg-white rounded shadow overflow-hidden">
   <table class="min-w-full">
@@ -20,13 +20,8 @@
         <td class="py-2 px-4 border-b">{{ s.section_code }}</td>
         <td class="py-2 px-4 border-b">{{ s.ta.username if s.ta else '-' }}</td>
         <td class="py-2 px-4 border-b">
-          {% if (current_user.role == 'lecturer' and s.instructor_id == current_user.id)
-                or (current_user.role == 'ta' and s.ta_id == current_user.id) %}
-            <a href="{{ url_for('attendance.lecturer_sessions', section_id=s.id) }}"
-               class="bg-blue-700 text-white px-3 py-1 rounded hover:bg-blue-900">Manage Sessions</a>
-          {% else %}
-            <span class="text-gray-500 text-sm">No access</span>
-          {% endif %}
+          <a href="{{ url_for('attendance.lecturer_sessions', section_id=s.id) }}"
+             class="bg-blue-700 text-white px-3 py-1 rounded hover:bg-blue-900">Manage Sessions</a>
         </td>
       </tr>
       {% else %}

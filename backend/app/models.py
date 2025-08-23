@@ -104,3 +104,32 @@ class AttendanceRecord(db.Model):
     __table_args__ = (
         db.UniqueConstraint('class_session_id', 'student_id', name='uq_attendance_session_student'),
     )
+
+# --- Alerts (Role-based, one-way messages) ---
+
+class Alert(db.Model):
+    __tablename__ = 'alert'
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    sender_role = db.Column(db.String(20), nullable=False)  # admin|lecturer|ta
+    title = db.Column(db.String(200), nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    sender = db.relationship('User', backref=db.backref('alerts_sent', lazy=True))
+
+class AlertRecipient(db.Model):
+    __tablename__ = 'alert_recipient'
+    id = db.Column(db.Integer, primary_key=True)
+    alert_id = db.Column(db.Integer, db.ForeignKey('alert.id'), nullable=False)
+    recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    recipient_role = db.Column(db.String(20), nullable=False)  # lecturer|ta|student|admin
+    is_read = db.Column(db.Boolean, nullable=False, default=False)
+    read_at = db.Column(db.DateTime, nullable=True)
+
+    alert = db.relationship('Alert', backref=db.backref('recipients', lazy=True, cascade="all, delete-orphan"))
+    recipient = db.relationship('User', backref=db.backref('alerts_received', lazy=True, cascade="all, delete-orphan"))
+
+    __table_args__ = (
+        db.UniqueConstraint('alert_id', 'recipient_id', name='uq_alert_recipient_once'),
+    )

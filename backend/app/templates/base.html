@@ -31,6 +31,11 @@
             class="hover:underline"
             >Courses</a
           >
+          <a
+            href="{{ url_for('admin.admin_alerts') }}"
+            class="hover:underline"
+            >Send Alerts</a
+          >
           {% elif current_user.role == 'lecturer' %}
           <a
             href="{{ url_for('lecturer.lecturer_dashboard') }}"
@@ -41,6 +46,11 @@
             href="{{ url_for('lecturer.lecturer_sections') }}"
             class="hover:underline"
             >My Sections</a
+          >
+          <a
+            href="{{ url_for('lecturer.lecturer_alerts_inbox') }}"
+            class="hover:underline"
+            >Alerts</a
           >
           {% elif current_user.role == 'student' %}
           <a
@@ -53,12 +63,20 @@
             class="hover:underline"
             >My Sessions</a
           >
+          <a
+            href="{{ url_for('student.student_alerts_inbox') }}"
+            class="hover:underline"
+            >Alerts</a
+          >
           {% elif current_user.role == 'ta' %}
           <a href="{{ url_for('ta.ta_dashboard') }}" class="hover:underline"
             >TA</a
           >
           <a href="{{ url_for('ta.ta_sections') }}" class="hover:underline"
             >My Assisted Sections</a
+          >
+          <a href="{{ url_for('ta.ta_alerts_inbox') }}" class="hover:underline"
+            >Alerts</a
           >
           {% endif %}
           <form action="{{ url_for('auth.logout') }}" method="get">

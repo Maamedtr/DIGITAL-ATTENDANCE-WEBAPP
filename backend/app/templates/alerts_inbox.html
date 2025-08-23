@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Alerts{% endblock %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-6">Alerts</h2>
+
+<div class="mb-4 flex items-center gap-3">
+  {% if role in ['lecturer','ta'] %}
+    <a
+      href="{{ url_for('lecturer.lecturer_alerts_compose') if role == 'lecturer' else url_for('ta.ta_alerts_compose') }}"
+      class="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-900">Compose Alert</a>
+  {% endif %}
+  <a href="{{ url_for('index') }}" class="px-4 py-2 rounded border text-blue-700 border-blue-700 hover:bg-blue-50">
+    Back
+  </a>
+</div>
+
+<div class="bg-white rounded shadow overflow-hidden">
+  <table class="min-w-full">
+    <thead class="bg-gray-50">
+      <tr>
+        <th class="text-left py-2 px-4 border-b">Title</th>
+        <th class="text-left py-2 px-4 border-b">From</th>
+        <th class="text-left py-2 px-4 border-b">Sent</th>
+        <th class="text-left py-2 px-4 border-b">Message</th>
+        <th class="text-left py-2 px-4 border-b">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in alerts %}
+      {% set a = item.alert %}
+      {% set r = item.rec %}
+      <tr class="odd:bg-white even:bg-gray-50 align-top">
+        <td class="py-2 px-4 border-b font-semibold">{{ a.title }}</td>
+        <td class="py-2 px-4 border-b capitalize">{{ a.sender_role }}</td>
+        <td class="py-2 px-4 border-b text-sm text-gray-600">
+          {{ a.created_at.strftime('%Y-%m-%d %H:%M') }}
+        </td>
+        <td class="py-2 px-4 border-b whitespace-pre-wrap">
+          {{ a.body }}
+        </td>
+        <td class="py-2 px-4 border-b">
+          {% if r.is_read %}
+            <span class="px-2 py-1 rounded text-xs bg-gray-200 text-gray-800">Read</span>
+          {% else %}
+            <span class="px-2 py-1 rounded text-xs bg-yellow-100 text-yellow-800">Unread</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="5" class="py-6 px-4 text-center text-gray-600">
+          No alerts yet.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

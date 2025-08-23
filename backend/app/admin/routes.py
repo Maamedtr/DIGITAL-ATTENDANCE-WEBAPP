@@ -327,3 +327,75 @@ def upload_enrollments():
 
     db.session.commit()
     return render_template('admin_enrollments_upload.html', sections=sections, result=results)
+
+# -------- Alerts: Admin compose (manual multi-select, in-app only) --------
+@admin_bp.route('/alerts', methods=['GET', 'POST'], endpoint='admin_alerts')
+@login_required
+def admin_alerts():
+    guard = _ensure_admin()
+    if guard:
+        return guard
+
+    from app.models import User, Alert, AlertRecipient
+    if request.method == 'POST':
+        title = (request.form.get('title') or '').strip()
+        body = (request.form.get('body') or '').strip()
+        if not title or not body:
+            flash('Title and message body are required.', 'danger')
+            return redirect(url_for('admin.admin_alerts'))
+
+        all_students = bool(request.form.get('all_students'))
+        all_lecturers = bool(request.form.get('all_lecturers'))
+        selected_student_ids = request.form.getlist('student_ids')
+        selected_lecturer_ids = request.form.getlist('lecturer_ids')
+
+        # Build recipient set {(user_id, role)}
+        recipients = set()
+
+        if all_students:
+            for u in User.query.filter_by(role='student', is_approved=True).all():
+                recipients.add((u.id, 'student'))
+        if all_lecturers:
+            for u in User.query.filter_by(role='lecturer', is_approved=True).all():
+                recipients.add((u.id, 'lecturer'))
+
+        for sid in selected_student_ids:
+            try:
+                uid = int(sid)
+                u = User.query.get(uid)
+                if u and u.role == 'student' and u.is_approved:
+                    recipients.add((u.id, 'student'))
+            except Exception:
+                continue
+
+        for lid in selected_lecturer_ids:
+            try:
+                uid = int(lid)
+                u = User.query.get(uid)
+                if u and u.role == 'lecturer' and u.is_approved:
+                    recipients.add((u.id, 'lecturer'))
+            except Exception:
+                continue
+
+        if not recipients:
+            flash('Select at least one recipient or choose a broadcast option.', 'danger')
+            return redirect(url_for('admin.admin_alerts'))
+
+        alert = Alert(sender_id=current_user.id, sender_role='admin', title=title, body=body)
+        db.session.add(alert)
+        db.session.flush()
+
+        for (uid, rrole) in recipients:
+            db.session.add(AlertRecipient(alert_id=alert.id, recipient_id=uid, recipient_role=rrole))
+
+        db.session.commit()
+        flash(f'Alert sent to {len(recipients)} recipient(s).', 'success')
+        return redirect(url_for('admin.admin_alerts'))
+
+    # GET: render compose form lists
+    lecturers = User.query.filter_by(role='lecturer', is_approved=True).order_by(User.username.asc()).all()
+    students = User.query.filter_by(role='student', is_approved=True).order_by(User.username.asc()).all()
+    return render_template('alerts_compose.html',
+                           mode='admin',
+                           lecturers=lecturers,
+                           students=students)
