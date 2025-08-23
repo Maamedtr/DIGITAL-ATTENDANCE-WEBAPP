@@ -21,9 +21,11 @@
       <td class="py-2 px-4 border-b">{{ user.role }}</td>
       <td class="py-2 px-4 border-b">
         <form method="post" action="{{ url_for('admin.approve_user', user_id=user.id) }}" class="inline">
+          {{ csrf_field }}
           <button type="submit" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-800">Approve</button>
         </form>
         <form method="post" action="{{ url_for('admin.reject_user', user_id=user.id) }}" class="inline ml-2">
+          {{ csrf_field }}
           <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-800">Reject</button>
         </form>
       </td>

@@ -54,14 +54,10 @@
             >My Sessions</a
           >
           {% elif current_user.role == 'ta' %}
-          <a
-            href="{{ url_for('ta.ta_dashboard') if 'ta.ta_dashboard' in current_app.view_functions else '#' }}"
-            class="hover:underline"
+          <a href="{{ url_for('ta.ta_dashboard') }}" class="hover:underline"
             >TA</a
           >
-          <a
-            href="{{ url_for('ta.ta_sections') if 'ta.ta_sections' in current_app.view_functions else '#' }}"
-            class="hover:underline"
+          <a href="{{ url_for('ta.ta_sections') }}" class="hover:underline"
             >My Assisted Sections</a
           >
           {% endif %}

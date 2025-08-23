@@ -3,8 +3,9 @@ from flask_login import login_required, current_user
 from datetime import datetime, timedelta
 import secrets
 import segno
-import io, csv
+import io, csv, time
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db
 from app.models import Section, ClassSession, Enrollment, AttendanceRecord
@@ -37,6 +38,23 @@ def _is_section_manager(section: Section) -> bool:
     except Exception:
         return False
     return False
+
+# Simple in-process rate limit for student mark endpoint (IP-based)
+_STUDENT_MARK_RATE = {}  # ip -> [timestamps]
+_STUDENT_MARK_RATE_WINDOW_SEC = 60
+_STUDENT_MARK_RATE_MAX = 20
+
+def _rate_limit_ok(ip: str) -> bool:
+    now = time.time()
+    bucket = _STUDENT_MARK_RATE.setdefault(ip, [])
+    # drop old entries
+    cutoff = now - _STUDENT_MARK_RATE_WINDOW_SEC
+    while bucket and bucket[0] < cutoff:
+        bucket.pop(0)
+    if len(bucket) >= _STUDENT_MARK_RATE_MAX:
+        return False
+    bucket.append(now)
+    return True
 
 # --------- Lecturer: Sessions for a Section ---------
 @attendance_bp.route('/lecturer/sections/<int:section_id>/sessions', methods=['GET', 'POST'], endpoint='lecturer_sessions')
@@ -161,6 +179,7 @@ def open_session(session_id: int):
     sess.status = 'open'
     sess.opened_at = datetime.utcnow()
     db.session.commit()
+    current_app.logger.info(f"session_opened section_id={sess.section_id} session_id={sess.id} by_user={current_user.id}")
     flash('Session opened. Code generated.', 'success')
     return redirect(url_for('attendance.lecturer_sessions', section_id=sess.section_id,
                             opened_session_id=sess.id, code=code))
@@ -184,6 +203,7 @@ def close_session(session_id: int):
     sess.status = 'closed'
     sess.closed_at = datetime.utcnow()
     db.session.commit()
+    current_app.logger.info(f"session_closed section_id={sess.section_id} session_id={sess.id} by_user={current_user.id}")
     flash('Session closed.', 'success')
     return redirect(url_for('attendance.lecturer_sessions', section_id=sess.section_id))
 
@@ -224,11 +244,18 @@ def student_mark(session_id: int):
     already_marked = AttendanceRecord.query.filter_by(class_session_id=sess.id, student_id=current_user.id).first() is not None
     
     if request.method == 'POST':
+        # Rate limit by IP
+        ip = request.headers.get('X-Forwarded-For', request.remote_addr) or 'unknown'
+        if not _rate_limit_ok(ip):
+            current_app.logger.warning(f"rate_limited ip={ip} user_id={current_user.id}")
+            flash('Too many attempts. Please wait a moment and try again.', 'warning')
+            return redirect(url_for('attendance.student_mark', session_id=session_id))
         code = request.form.get('code', '').strip()
         if not code or len(code) != 6 or not code.isdigit():
             flash('Invalid code format.', 'danger')
             return redirect(url_for('attendance.student_mark', session_id=session_id))
         if not check_password_hash(sess.open_code_hash, code):
+            current_app.logger.warning(f"wrong_code user_id={current_user.id} session_id={sess.id} ip={ip}")
             flash('Incorrect code.', 'danger')
             return redirect(url_for('attendance.student_mark', session_id=session_id))
     
@@ -236,9 +263,17 @@ def student_mark(session_id: int):
             flash('Attendance already recorded for this session.', 'info')
             return redirect(url_for('student.student_sessions'))
     
-        rec = AttendanceRecord(class_session_id=sess.id, student_id=current_user.id, status='present')
-        db.session.add(rec)
-        db.session.commit()
+        try:
+            rec = AttendanceRecord(class_session_id=sess.id, student_id=current_user.id, status='present')
+            db.session.add(rec)
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            # Another parallel request inserted it; treat as idempotent success
+            current_app.logger.info(f"attendance_duplicate user_id={current_user.id} session_id={sess.id}")
+            flash('Attendance already recorded for this session.', 'info')
+            return redirect(url_for('student.student_sessions'))
+        current_app.logger.info(f"attendance_recorded user_id={current_user.id} session_id={sess.id}")
         flash('Attendance recorded as present.', 'success')
         return redirect(url_for('student.student_sessions'))
     

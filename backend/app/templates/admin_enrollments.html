@@ -7,6 +7,7 @@
 <div class="bg-white rounded shadow p-6 mb-8">
   <h3 class="text-lg font-semibold mb-4">Add Enrollment</h3>
   <form method="post" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+    {{ csrf_field }}
     <div>
       <label class="block text-sm font-medium mb-1">Section</label>
       <select name="section_id" class="border rounded px-3 py-2 w-full" required>
@@ -63,6 +64,7 @@
         <td class="py-2 px-4 border-b">{{ enr.student.username }} ({{ enr.student.email }})</td>
         <td class="py-2 px-4 border-b">
           <form method="post" action="{{ url_for('admin.delete_enrollment', enrollment_id=enr.id) }}" onsubmit="return confirm('Remove this enrollment?');">
+            {{ csrf_field }}
             <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-800">Delete</button>
           </form>
         </td>

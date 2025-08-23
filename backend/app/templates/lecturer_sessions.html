@@ -7,6 +7,7 @@
 <div class="bg-white rounded shadow p-6 mb-8">
   <h3 class="text-lg font-semibold mb-4">Create Class Session</h3>
   <form method="post" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    {{ csrf_field }}
     <div>
       <label class="block text-sm font-medium mb-1">Scheduled Start</label>
       <input type="datetime-local" name="scheduled_start" class="border rounded px-3 py-2 w-full" required>
@@ -127,11 +128,13 @@
           <div class="flex flex-wrap gap-2">
             {% if s.status != 'open' and s.status != 'closed' %}
             <form method="post" action="{{ url_for('attendance.open_session', session_id=s.id) }}">
+              {{ csrf_field }}
               <button class="bg-blue-700 text-white px-3 py-1 rounded hover:bg-blue-900">Open</button>
             </form>
             {% endif %}
             {% if s.status == 'open' %}
             <form method="post" action="{{ url_for('attendance.close_session', session_id=s.id) }}">
+              {{ csrf_field }}
               <button class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-800">Close</button>
             </form>
             {% if opened_code and opened_session_id == s.id %}
@@ -161,6 +164,6 @@
 </div>
 
 <div class="mt-6">
-  <a href="{{ url_for('lecturer.lecturer_sections') }}" class="text-blue-700 underline">Back to My Sections</a>
+  <a href="{{ url_for('ta.ta_sections') if current_user.role == 'ta' else url_for('lecturer.lecturer_sections') }}" class="text-blue-700 underline">Back to My Sections</a>
 </div>
 {% endblock %}

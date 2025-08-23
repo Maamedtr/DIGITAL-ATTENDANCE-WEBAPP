@@ -7,6 +7,7 @@
 <div class="bg-white rounded shadow p-6 mb-8">
   <h3 class="text-lg font-semibold mb-4">Upload CSV</h3>
   <form method="post" enctype="multipart/form-data" class="space-y-4">
+    {{ csrf_field }}
     <div>
       <label class="block text-sm font-medium mb-1">Section (optional if provided in CSV)</label>
       <select name="section_id" class="border rounded px-3 py-2 w-full">
